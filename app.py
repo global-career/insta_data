@@ -1,6 +1,11 @@
 import os
 from google.cloud import bigquery
 
+import pandas as pd
+import matplotlib.pyplot as plt
+import streamlit as st
+import matplotlib.ticker as ticker
+
 # 認証ファイルのパスをここに指定（↓あなたのJSONファイルパス）
 #os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/toki-mac/Downloads/extreme-core-447003-m3-88f2778773a4.json"
 # Base64でエンコードされたJSON文字列をSecretsから取得
@@ -16,13 +21,6 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = tmp_json_path
 
 # BigQueryクライアント作成
 client = bigquery.Client()
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
-import matplotlib.ticker as ticker
-
 
 st.title("📈 Global Career Community Instagram分析")
 
