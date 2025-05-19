@@ -2,7 +2,17 @@ import os
 from google.cloud import bigquery
 
 # 認証ファイルのパスをここに指定（↓あなたのJSONファイルパス）
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/toki-mac/Downloads/extreme-core-447003-m3-88f2778773a4.json"
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/toki-mac/Downloads/extreme-core-447003-m3-88f2778773a4.json"
+# Base64でエンコードされたJSON文字列をSecretsから取得
+b64_json = st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"]
+
+# 一時ファイルとして書き出す
+tmp_json_path = "/tmp/gcp_key.json"
+with open(tmp_json_path, "wb") as f:
+    f.write(base64.b64decode(b64_json))
+
+# 環境変数にセット（BigQueryライブラリがここを参照）
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = tmp_json_path
 
 # BigQueryクライアント作成
 client = bigquery.Client()
