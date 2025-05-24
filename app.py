@@ -137,7 +137,7 @@ daily_per_post = (
     .sum()
     .reset_index()
 )
-
+print("hello")
 st.subheader("日ごとのKPI合計増減サマリ")
 st.dataframe(daily_per_post)
 
