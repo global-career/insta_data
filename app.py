@@ -26,7 +26,7 @@ client = bigquery.Client()
 
 st.title("📈 Global Career Community Instagram分析")
 
-st.header("① フォロワー数の推移")
+st.header("① 日ごとのフォロワー数の推移")
 
 # 多分いらない　followers_path = '/Users/toki-mac/Downloads/Streamlit data/GCC instagram data graph - InstagramData.csv'
 # 多分いらない　df_followers = pd.read_csv(followers_path)
