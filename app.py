@@ -37,6 +37,7 @@ def main():
     name, authentication_status, username = authenticator.login("ログイン", "main")
 
     if authentication_status:
+
         # ✅ サイドバー非表示
         hide_sidebar = """
         <style>
@@ -56,10 +57,8 @@ def main():
 
         # ダッシュボード表示
         show_dashboard()
-
     elif authentication_status is False:
         st.error("ユーザー名またはパスワードが間違っています。")
-
     elif authentication_status is None:
         st.warning("ユーザー名とパスワードを入力してください。")
 
