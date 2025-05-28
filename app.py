@@ -64,7 +64,7 @@ def main():
     elif authentication_status is False:
         st.error("ユーザー名またはパスワードが間違っています。")
     elif authentication_status is None:
-        st.warning("ユーザー名とパスワードを入力してください。")
+        st.warning("Login to continue")
 
 def show_dashboard(admin_mode=False):
     if admin_mode:
