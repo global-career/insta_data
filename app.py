@@ -40,7 +40,7 @@ def login_user(username, password):
     c.execute('SELECT * FROM userstable WHERE username =? AND password = ?', (username, password))
     return c.fetchall()
 
-# # ログイン機能メイン
+# ログイン機能メイン
 def main():
     # config.yamlの読み込み
     with open('./INSTA_DATA/config.yaml') as file:
@@ -51,7 +51,6 @@ def main():
         config['cookie']['name'],
         config['cookie']['key'],
         config['cookie']['expiry_days'],
-        config['preauthorized']
     )
 
     # ログインUIの表示
@@ -84,6 +83,8 @@ def main():
     elif authentication_status is None:
         st.warning("ユーザー名とパスワードを入力してください。")
 
+
+#こっから
     # if "logged_in" not in st.session_state:
     #     st.session_state.logged_in = False
 
@@ -142,26 +143,50 @@ def main():
 def show_dashboard():
     #①
     query_followers = """
-    SELECT date, username, title, followers, posts_number, profile_image
-    FROM `insta-data-460018.insta_dataset_us.followers`
+    SELECT date, username, insta_name, follower, posts_count, profile_image
+    FROM `extreme-core-447003-m3.test.follower`
     """
     df_followers = client.query(query_followers).to_dataframe()
     df_followers.columns = ["取得日時", "ユーザーネーム", "名前", "フォロワー数", "投稿数", "プロフィール画像"]
-    df_followers["取得日"] = pd.to_datetime(df_followers["取得日時"]).dt.date
+
+    df_followers["取得日時"] = (
+        df_followers["取得日時"]
+        .astype(str)
+        .str.replace("午前", "AM")
+        .str.replace("午後", "PM")
+    )
+    df_followers["取得日"] = pd.to_datetime(
+        df_followers["取得日時"],
+        format="%m/%d/%Y, %I:%M:%S %p",
+        errors="coerce"
+    ).dt.date
+
+    # df_followers["取得日"] = pd.to_datetime(df_followers["取得日時"]).dt.date
+
     df_daily = df_followers.groupby("取得日").last().reset_index()
+    df_daily["フォロワー数"] = pd.to_numeric(df_daily["フォロワー数"], errors="coerce")
     df_daily["増減"] = df_daily["フォロワー数"].diff()
     df_daily["フラグ"] = df_daily["増減"].apply(
         lambda x: "データなし" if pd.isna(x) else ("増加" if x > 0 else ("減少" if x < 0 else "変化なし"))
     )
     #②
     query_posts = """
-    SELECT date, ID, posted_date, media_type, view_count, reach, save, `like`, `comment`, `share`
-    FROM `insta-data-460018.insta_dataset_us.test`
+    SELECT date, post_id, post_date, post_type, view_count, reach, saved, `like`, `comment`, `share`
+    FROM `extreme-core-447003-m3.test.insight`
     """
     df_posts = client.query(query_posts).to_dataframe()
     df_posts.columns = ["実行日時", "投稿ID", "投稿日時", "投稿種別", "再生回数", "リーチ", "保存数", "いいね数", "コメント数", "シェア数"] 
-    df_posts["実行日時"] = df_posts["実行日時"].str.replace(r"\d{2}:\d{2}$", "00:00", regex=True) # 実行日時から時刻部分の分を00にする（例：13:24 → 13:00）
-    df_posts["実行日"] = pd.to_datetime(df_posts["実行日時"]).dt.date # 実行日だけ取り出した列を追加（あとでグラフに使える）
+    # Clean up timestamp formatting if needed
+    df_posts["実行日時"] = (
+        df_posts["実行日時"]
+        .astype(str)
+        .str.replace("午前", "AM")
+        .str.replace("午後", "PM")
+    )
+    # Use only the date portion
+    df_posts["実行日"] = pd.to_datetime(df_posts["実行日時"].str[:10], format="%Y/%m/%d").dt.date
+    # df_posts["実行日時"] = df_posts["実行日時"].str.replace(r"\d{2}:\d{2}$", "00:00", regex=True) # 実行日時から時刻部分の分を00にする（例：13:24 → 13:00）
+    # df_posts["実行日"] = pd.to_datetime(df_posts["実行日時"]).dt.date # 実行日だけ取り出した列を追加（あとでグラフに使える）
     df_posts["リーチ"] = df_posts["リーチ"].astype(str).str.replace(",", "")
     df_posts = df_posts.dropna(subset=['リーチ']).copy()
     df_posts.loc[:, 'リーチ'] = df_posts['リーチ'].astype(int)
