@@ -1,0 +1,15 @@
+credentials:
+  usernames:
+    toki:
+      email: toki@example.com
+      name: Toki
+      password: '$2b$12$KIXrf4y8eL8soN0J3UlXeugx/7ItVrRfTT3N5ySpYrfM4v/r7xI2W'  # "password123"
+
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: some_cookie_name
+
+preauthorized:
+  emails:
+    - toki@example.com

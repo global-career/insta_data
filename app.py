@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import streamlit as st
 from google.cloud import bigquery
+# streamlit-authenticator 関連のライブラリ
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
 
 # 認証ファイルのパスをここに指定（↓あなたのJSONファイルパス）
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/toki-mac/Downloads/extreme-core-447003-m3-88f2778773a4.json"
@@ -38,11 +42,23 @@ def login_user(username, password):
 
 # # ログイン機能メイン
 def main():
-    if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
+    # config.yamlの読み込み
+    with open('./INSTA_DATA/config.yaml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+    # 認証オブジェクトの作成
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized']
+    )
 
-    if st.session_state.logged_in:
-        # ✅ サイドバーを完全に非表示にするCSS
+    # ログインUIの表示
+    name, authentication_status, username = authenticator.login("ログイン", "main")
+
+    if authentication_status:
+        # ✅ サイドバー非表示
         hide_sidebar = """
         <style>
             [data-testid="stSidebar"] {
@@ -52,45 +68,75 @@ def main():
         """
         st.markdown(hide_sidebar, unsafe_allow_html=True)
 
-        # ✅ ログアウトボタンを右上に配置
-
+        # ✅ ヘッダーにログイン情報 & ログアウトボタン
         col_user, col_logout = st.columns([5, 1])
         with col_user:
-            st.markdown(f"👤 ログイン中：**{st.session_state.username}**")
+            st.markdown(f"👤 ログイン中：**{name}**")
         with col_logout:
-            if st.button("ログアウト", key="logout_btn"):
-               st.session_state.clear()
-               st.rerun()
+            authenticator.logout("ログアウト", "main")
+
+        # ダッシュボード表示
         show_dashboard()
 
-    else:
-        # ✅ ログインしてないときだけサイドバー表示
-        st.sidebar.title("🔒 ユーザーログイン")
-        menu = ["ログイン", "サインアップ"]
-        choice = st.sidebar.selectbox("メニューを選んでください", menu)
+    elif authentication_status is False:
+        st.error("ユーザー名またはパスワードが間違っています。")
 
-        if choice == "ログイン":
-            username = st.sidebar.text_input("ユーザー名")
-            password = st.sidebar.text_input("パスワード", type='password')
-            if st.sidebar.button("ログイン"):
-                create_user_table()
-                result = login_user(username, make_hashes(password))
-                if result:
-                    st.success(f"ようこそ、{username} さん！")
-                    st.session_state.logged_in = True
-                    st.session_state.username = username
-                    st.rerun()
-                else:
-                    st.error("ユーザー名またはパスワードが間違っています")
+    elif authentication_status is None:
+        st.warning("ユーザー名とパスワードを入力してください。")
 
-        elif choice == "サインアップ":
-            st.sidebar.subheader("📝 アカウント作成")
-            new_user = st.sidebar.text_input("新しいユーザー名")
-            new_password = st.sidebar.text_input("新しいパスワード", type='password')
-            if st.sidebar.button("アカウント作成"):
-                create_user_table()
-                add_user(new_user, make_hashes(new_password))
-                st.success("アカウント作成に成功しました。ログインしてください。")
+    # if "logged_in" not in st.session_state:
+    #     st.session_state.logged_in = False
+
+    # if st.session_state.logged_in:
+    #     # ✅ サイドバーを完全に非表示にするCSS
+    #     hide_sidebar = """
+    #     <style>
+    #         [data-testid="stSidebar"] {
+    #             display: none;
+    #         }
+    #     </style>
+    #     """
+    #     st.markdown(hide_sidebar, unsafe_allow_html=True)
+
+    #     # ✅ ログアウトボタンを右上に配置
+
+    #     col_user, col_logout = st.columns([5, 1])
+    #     with col_user:
+    #         st.markdown(f"👤 ログイン中：**{st.session_state.username}**")
+    #     with col_logout:
+    #         if st.button("ログアウト", key="logout_btn"):
+    #            st.session_state.clear()
+    #            st.rerun()
+    #     show_dashboard()
+
+    # else:
+    #     # ✅ ログインしてないときだけサイドバー表示
+    #     st.sidebar.title("🔒 ユーザーログイン")
+    #     menu = ["ログイン", "サインアップ"]
+    #     choice = st.sidebar.selectbox("メニューを選んでください", menu)
+
+    #     if choice == "ログイン":
+    #         username = st.sidebar.text_input("ユーザー名")
+    #         password = st.sidebar.text_input("パスワード", type='password')
+    #         if st.sidebar.button("ログイン"):
+    #             create_user_table()
+    #             result = login_user(username, make_hashes(password))
+    #             if result:
+    #                 st.success(f"ようこそ、{username} さん！")
+    #                 st.session_state.logged_in = True
+    #                 st.session_state.username = username
+    #                 st.rerun()
+    #             else:
+    #                 st.error("ユーザー名またはパスワードが間違っています")
+
+    #     elif choice == "サインアップ":
+    #         st.sidebar.subheader("📝 アカウント作成")
+    #         new_user = st.sidebar.text_input("新しいユーザー名")
+    #         new_password = st.sidebar.text_input("新しいパスワード", type='password')
+    #         if st.sidebar.button("アカウント作成"):
+    #             create_user_table()
+    #             add_user(new_user, make_hashes(new_password))
+    #             st.success("アカウント作成に成功しました。ログインしてください。")
 
 
 def show_dashboard():
