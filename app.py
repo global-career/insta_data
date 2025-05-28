@@ -34,9 +34,10 @@ def main():
     )
 
     # ログインUIの表示
-    name, authentication_status, username = authenticator.login("ログイン", "main")
+    name, authentication_status, username = authenticator.login("GCC - Social Media Performance Dashboard", "main")
 
     if authentication_status:
+        user_role = config['credentials']['usernames'][username]['role']
 
         # ✅ サイドバー非表示
         hide_sidebar = """
@@ -51,19 +52,27 @@ def main():
         # ✅ ヘッダーにログイン情報 & ログアウトボタン
         col_user, col_logout = st.columns([5, 1])
         with col_user:
-            st.markdown(f"👤 ログイン中：**{name}**")
+            st.markdown(f"👤 ログイン中：**{name}**({user_role})")
         with col_logout:
             authenticator.logout("ログアウト", "main")
 
-        # ダッシュボード表示
-        show_dashboard()
+        if user_role == 'admin':
+            show_dashboard(admin_mode=True)
+        else:
+            show_dashboard(admin_mode=False)
+
     elif authentication_status is False:
         st.error("ユーザー名またはパスワードが間違っています。")
     elif authentication_status is None:
         st.warning("ユーザー名とパスワードを入力してください。")
 
+def show_dashboard(admin_mode=False):
+    if admin_mode:
+        st.info("🛠 管理者モードです。編集や追加機能が有効です。")
+        # 管理者だけの機能を書く
+    else:
+        st.info("🔎 閲覧モードです。データの閲覧のみ可能です。")
 
-def show_dashboard():
     #①
     query_followers = """
     SELECT date, username, insta_name, follower, posts_count, profile_image
@@ -84,7 +93,6 @@ def show_dashboard():
         errors="coerce"
     ).dt.date
 
-    # df_followers["取得日"] = pd.to_datetime(df_followers["取得日時"]).dt.date
 
     df_daily = df_followers.groupby("取得日").last().reset_index()
     df_daily["フォロワー数"] = pd.to_numeric(df_daily["フォロワー数"], errors="coerce")
