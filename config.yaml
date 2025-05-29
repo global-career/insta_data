@@ -11,6 +11,7 @@ credentials:
     test:
       name: test
       password: '$2b$12$tlHS/ivZ4I44tsZO7DB.Z.hF3u8lNDJIctKhvgdGxHCHyfMVuq7UG' 
+      role: viewer
 
 cookie:
   expiry_days: 30
