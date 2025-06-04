@@ -138,46 +138,58 @@ def show_dashboard(admin_mode=False):
     )
 
 
-
-
-
-
         # ==== グリッド表示 ====
 
-        # ✅ 左サイドに "タブ風メニュー" を作成
-    tab_options = ["① フォロワー推移", "② 合計リーチ（日別）", "③ 投稿別リーチ", "④ KPI日次増減"]
-
     with st.sidebar:
-        st.markdown("## 📊 メニュー")
-        selected = st.radio("表示を選んでください", tab_options, index=0)
+        st.markdown("## 🎥 表示対象を選ぶ")
+        selected_platform = st.selectbox("メディアを選んでください", ["Instagram", "YouTube"])
 
-    # ✅ メインコンテンツ表示
-    if selected == "① フォロワー推移":
-        st.subheader("📈 フォロワー数の推移")
-        st.line_chart(df_daily.set_index("取得日")["フォロワー数"])
-        st.dataframe(df_daily[["取得日", "フォロワー数", "増減", "フラグ"]])
+        if selected_platform == "Instagram":
+            st.markdown("## 📊 Instagramメニュー")
+            selected_menu = st.radio("表示を選んでください", 
+                                 ["① フォロワー推移", "② 合計リーチ（日別）", "③ 投稿別リーチ", "④ KPI日次増減"],index=0)
 
-    elif selected == "② 合計リーチ（日別）":
-        st.subheader("📊 日ごとの合計リーチ数")
-        fig2, ax2 = plt.subplots(figsize=(6, 4))
-        ax2.plot(dairy_sum["実行日"], dairy_sum["リーチ"], marker='o', linestyle='-')
-        ax2.set_xlabel("日付"); ax2.set_ylabel("リーチ数"); ax2.grid(True)
-        plt.xticks(rotation=45); plt.tight_layout()
-        st.pyplot(fig2)
+        elif selected_platform == "YouTube":
+             st.markdown("## 📊 YouTubeメニュー")
+             selected_menu = st.radio("表示を選んでください", 
+                                ["① 登録者推移", "② 動画別視聴回数", "③ クリック率推移"],index=0)
 
-    elif selected == "③ 投稿別リーチ":
-        st.subheader("📌 投稿別リーチ推移")
-        fig3, ax3 = plt.subplots(figsize=(6, 4))
-        ax3.plot(daily_reach['実行日'], daily_reach['リーチ'], marker='o')
-        ax3.set_xlabel("実行日"); ax3.set_ylabel("リーチ数"); ax3.grid(True)
-        ax3.set_title(f"投稿ID {target_id}")
-        ax3.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
-        plt.xticks(rotation=45); plt.tight_layout()
-        st.pyplot(fig3)
+    # Instagram用グラフ描画
+    if selected_platform == "Instagram":
+        if selected_menu == "① フォロワー推移":
+            st.subheader("📈 フォロワー数の推移")
+            st.line_chart(df_daily.set_index("取得日")["フォロワー数"])
+            st.dataframe(df_daily[["取得日", "フォロワー数", "増減", "フラグ"]])
 
-    elif selected == "④ KPI日次増減":
-        st.subheader("📉 KPI日次増減")
-        st.dataframe(daily_per_post.drop(columns=["投稿ID"]))
+        elif selected_menu == "② 合計リーチ（日別）":
+            st.subheader("📊 日ごとの合計リーチ数")
+            fig2, ax2 = plt.subplots(figsize=(6, 4))
+            ax2.plot(dairy_sum["実行日"], dairy_sum["リーチ"], marker='o', linestyle='-')
+            ax2.set_xlabel("日付"); ax2.set_ylabel("リーチ数"); ax2.grid(True)
+            plt.xticks(rotation=45); plt.tight_layout()
+            st.pyplot(fig2)
+
+        elif selected_menu == "③ 投稿別リーチ":
+            st.subheader("📌 投稿別リーチ推移")
+            fig3, ax3 = plt.subplots(figsize=(6, 4))
+            ax3.plot(daily_reach['実行日'], daily_reach['リーチ'], marker='o')
+            ax3.set_xlabel("実行日"); ax3.set_ylabel("リーチ数"); ax3.grid(True)
+            ax3.set_title(f"投稿ID {target_id}")
+            ax3.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
+            plt.xticks(rotation=45); plt.tight_layout()
+            st.pyplot(fig3)
+        elif selected_menu == "④ KPI日次増減":
+            st.subheader("📉 KPI日次増減")
+            st.dataframe(daily_per_post.drop(columns=["投稿ID"]))
+
+        # YouTube用グラフ描画（仮の例）
+    elif selected_platform == "YouTube":
+        if selected_menu == "① 登録者推移":
+            st.subheader("📈 登録者数の推移")
+            st.line_chart(...)  # YouTubeデータで
+        elif selected_menu == "② 動画別視聴回数":
+            st.subheader("📺 各動画の視聴回数")
+            st.bar_chart(...)  # 適宜変更
     
 
 if __name__ == '__main__':
