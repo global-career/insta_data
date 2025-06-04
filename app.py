@@ -127,6 +127,15 @@ def show_dashboard(admin_mode=False):
         .reset_index()
     )
 
+    #⑤ YouTubeデータ読み込み
+    query_youtube = """
+    SELECT * FROM `extreme-core-447003-m3.youtube_dataset.GCC_youtube_insight`
+    """
+    df_youtube = client.query(query_youtube).to_dataframe()
+    # 日付列が文字列なら変換
+    df_youtube["published_date"] = pd.to_datetime(df_youtube["published_date"], errors="coerce")
+    df_youtube["view_count"] = pd.to_numeric(df_youtube["view_count"], errors="coerce")
+
 
         # ==== グリッド表示 ====
 
@@ -143,6 +152,7 @@ def show_dashboard(admin_mode=False):
              st.markdown("## 📊 YouTubeメニュー")
              selected_menu = st.radio("表示を選んでください", 
                                 ["① 登録者推移", "② 動画別視聴回数", "③ クリック率推移"],index=0)
+             
 
     # Instagram用グラフ描画
     if selected_platform == "Instagram":
@@ -158,7 +168,6 @@ def show_dashboard(admin_mode=False):
             ax2.set_xlabel("日付"); ax2.set_ylabel("リーチ数"); ax2.grid(True)
             plt.xticks(rotation=45); plt.tight_layout()
             st.pyplot(fig2)
-
         elif selected_menu == "③ 投稿別リーチ":
             st.subheader("📌 投稿別リーチ推移")
             fig3, ax3 = plt.subplots(figsize=(6, 4))
@@ -172,14 +181,19 @@ def show_dashboard(admin_mode=False):
             st.subheader("📉 KPI日次増減")
             st.dataframe(daily_per_post.drop(columns=["投稿ID"]))
 
-        # YouTube用グラフ描画（仮の例）
-    elif selected_platform == "YouTube":
-        if selected_menu == "① 登録者推移":
-            st.subheader("📈 登録者数の推移")
-            st.line_chart(...)  # YouTubeデータで
-        elif selected_menu == "② 動画別視聴回数":
-            st.subheader("📺 各動画の視聴回数")
-            st.bar_chart(...)  # 適宜変更
+    # YouTube用グラフ描画
+    if selected_platform == "YouTube":        
+          if selected_menu == "① 視聴回数推移":
+                st.subheader("📈 視聴回数の推移")
+                st.line_chart(df_youtube.groupby("published_date")["view_count"].sum())  # 仮の登録者数代わりにview使用
+
+          elif selected_menu == "② 動画別視聴回数":
+                st.subheader("📺 各動画の視聴回数（上位10）")
+                top_videos = df_youtube.sort_values("view_count", ascending=False).head(10)
+                st.bar_chart(top_videos.set_index("title")["view_count"])
+
+          elif selected_menu == "③ クリック率推移":
+                st.warning("※ 現在クリック率データは未実装です。別途収集が必要です。")
     
 
 if __name__ == '__main__':
