@@ -136,8 +136,19 @@ def show_dashboard(admin_mode=False):
     df_youtube["published_date"] = pd.to_datetime(df_youtube["published_date"], errors="coerce")
     df_youtube["view_count"] = pd.to_numeric(df_youtube["view_count"], errors="coerce")
 
+    #⑥ GCC_other_insights 読み込み
+    query_other = """
+    SELECT update_date, subscribe_count, view_count, post_count
+    FROM `extreme-core-447003-m3.youtube_dataset.GCC_other_insights`
+    ORDER BY update_date
+    """
+    df_other = client.query(query_other).to_dataframe()
+    df_other["update_date"] = pd.to_datetime(df_other["update_date"])
 
-        # ==== グリッド表示 ====
+
+
+
+        # =============== グリッド表示 ===================
 
     with st.sidebar:
         st.markdown("## 🎥 表示対象を選ぶ")
@@ -151,7 +162,7 @@ def show_dashboard(admin_mode=False):
         elif selected_platform == "YouTube":
              st.markdown("## 📊 YouTubeメニュー")
              selected_menu = st.radio("表示を選んでください", 
-                                ["① 登録者推移", "② 動画別視聴回数", "③ クリック率推移"],index=0)
+                                ["① 登録者数の推移", "② 総再生回数の推移", "③ 動画別視聴回数", "④ その他週次推移"],index=0)
              
 
     # Instagram用グラフ描画
@@ -182,18 +193,36 @@ def show_dashboard(admin_mode=False):
             st.dataframe(daily_per_post.drop(columns=["投稿ID"]))
 
     # YouTube用グラフ描画
-    if selected_platform == "YouTube":        
-          if selected_menu == "① 視聴回数推移":
-                st.subheader("📈 視聴回数の推移")
-                st.line_chart(df_youtube.groupby("published_date")["view_count"].sum())  # 仮の登録者数代わりにview使用
+    if selected_platform == "YouTube":
+        if selected_menu == "① 登録者数の推移":
+            st.subheader("📈 登録者数の推移")
+            st.line_chart(df_other.set_index("update_date")["subscribe_count"])
 
-          elif selected_menu == "② 動画別視聴回数":
-                st.subheader("📺 各動画の視聴回数（上位10）")
-                top_videos = df_youtube.sort_values("view_count", ascending=False).head(10)
-                st.bar_chart(top_videos.set_index("title")["view_count"])
+        elif selected_menu == "② 総再生回数の推移":
+            st.subheader("▶️ 総再生回数の推移")
+            st.line_chart(df_other.set_index("update_date")["view_count"])
 
-          elif selected_menu == "③ クリック率推移":
-                st.warning("※ 現在クリック率データは未実装です。別途収集が必要です。")
+        elif selected_menu == "③ 動画別視聴回数":
+            st.subheader("📺 各動画の視聴回数（上位10）")
+            top_videos = df_youtube.sort_values("view_count", ascending=False).head(10)
+            st.bar_chart(top_videos.set_index("title")["view_count"])
+
+        elif selected_menu == "④ その他週次推移":
+            st.subheader("📊 登録者数・再生数・投稿数の推移")
+            st.line_chart(df_other.set_index("update_date")[["subscribe_count", "view_count", "post_count"]])
+
+    # if selected_platform == "YouTube":        
+    #       if selected_menu == "① 視聴回数推移":
+    #             st.subheader("📈 視聴回数の推移")
+    #             st.line_chart(df_youtube.groupby("published_date")["view_count"].sum())  # 仮の登録者数代わりにview使用
+
+    #       elif selected_menu == "② 動画別視聴回数":
+    #             st.subheader("📺 各動画の視聴回数（上位10）")
+    #             top_videos = df_youtube.sort_values("view_count", ascending=False).head(10)
+    #             st.bar_chart(top_videos.set_index("title")["view_count"])
+
+    #       elif selected_menu == "③ クリック率推移":
+    #             st.warning("※ 現在クリック率データは未実装です。別途収集が必要です。")
     
 
 if __name__ == '__main__':
