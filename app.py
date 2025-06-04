@@ -39,16 +39,6 @@ def main():
     if authentication_status:
         user_role = config['credentials']['usernames'][username]['role']
 
-        # # ✅ サイドバー非表示
-        # hide_sidebar = """
-        # <style>
-        #     [data-testid="stSidebar"] {
-        #         display: none;
-        #     }
-        # </style>
-        # """
-        # st.markdown(hide_sidebar, unsafe_allow_html=True)
-
         # ✅ ヘッダーにログイン情報 & ログアウトボタン
         col_user, col_logout = st.columns([5, 1])
         with col_user:
