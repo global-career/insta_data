@@ -39,15 +39,15 @@ def main():
     if authentication_status:
         user_role = config['credentials']['usernames'][username]['role']
 
-        # ✅ サイドバー非表示
-        hide_sidebar = """
-        <style>
-            [data-testid="stSidebar"] {
-                display: none;
-            }
-        </style>
-        """
-        st.markdown(hide_sidebar, unsafe_allow_html=True)
+        # # ✅ サイドバー非表示
+        # hide_sidebar = """
+        # <style>
+        #     [data-testid="stSidebar"] {
+        #         display: none;
+        #     }
+        # </style>
+        # """
+        # st.markdown(hide_sidebar, unsafe_allow_html=True)
 
         # ✅ ヘッダーにログイン情報 & ログアウトボタン
         col_user, col_logout = st.columns([5, 1])
@@ -80,7 +80,6 @@ def show_dashboard(admin_mode=False):
     """
     df_followers = client.query(query_followers).to_dataframe()
     df_followers.columns = ["取得日時", "ユーザーネーム", "名前", "フォロワー数", "投稿数", "プロフィール画像"]
-
     df_followers["取得日時"] = (
         df_followers["取得日時"]
         .astype(str)
@@ -92,8 +91,6 @@ def show_dashboard(admin_mode=False):
         format="%m/%d/%Y, %I:%M:%S %p",
         errors="coerce"
     ).dt.date
-
-
     df_daily = df_followers.groupby("取得日").last().reset_index()
     df_daily["フォロワー数"] = pd.to_numeric(df_daily["フォロワー数"], errors="coerce")
     df_daily["増減"] = df_daily["フォロワー数"].diff()
@@ -107,17 +104,13 @@ def show_dashboard(admin_mode=False):
     """
     df_posts = client.query(query_posts).to_dataframe()
     df_posts.columns = ["実行日時", "投稿ID", "投稿日時", "投稿種別", "再生回数", "リーチ", "保存数", "いいね数", "コメント数", "シェア数"] 
-    # Clean up timestamp formatting if needed
     df_posts["実行日時"] = (
         df_posts["実行日時"]
         .astype(str)
         .str.replace("午前", "AM")
         .str.replace("午後", "PM")
     )
-    # Use only the date portion
     df_posts["実行日"] = pd.to_datetime(df_posts["実行日時"].str[:10], format="%Y/%m/%d").dt.date
-    # df_posts["実行日時"] = df_posts["実行日時"].str.replace(r"\d{2}:\d{2}$", "00:00", regex=True) # 実行日時から時刻部分の分を00にする（例：13:24 → 13:00）
-    # df_posts["実行日"] = pd.to_datetime(df_posts["実行日時"]).dt.date # 実行日だけ取り出した列を追加（あとでグラフに使える）
     df_posts["リーチ"] = df_posts["リーチ"].astype(str).str.replace(",", "")
     df_posts = df_posts.dropna(subset=['リーチ']).copy()
     df_posts.loc[:, 'リーチ'] = df_posts['リーチ'].astype(int)
@@ -145,24 +138,35 @@ def show_dashboard(admin_mode=False):
     )
 
 
-    # ==== グリッド表示 ====
-    colA1, colA2 = st.columns(2)
-    with colA1:
-        st.subheader("① フォロワー数の推移")
+
+
+
+
+        # ==== グリッド表示 ====
+
+        # ✅ 左サイドに "タブ風メニュー" を作成
+    tab_options = ["① フォロワー推移", "② 合計リーチ（日別）", "③ 投稿別リーチ", "④ KPI日次増減"]
+
+    with st.sidebar:
+        st.markdown("## 📊 メニュー")
+        selected = st.radio("表示を選んでください", tab_options, index=0)
+
+    # ✅ メインコンテンツ表示
+    if selected == "① フォロワー推移":
+        st.subheader("📈 フォロワー数の推移")
         st.line_chart(df_daily.set_index("取得日")["フォロワー数"])
         st.dataframe(df_daily[["取得日", "フォロワー数", "増減", "フラグ"]])
 
-    with colA2:
-        st.subheader("② 日ごとの合計リーチ数")
+    elif selected == "② 合計リーチ（日別）":
+        st.subheader("📊 日ごとの合計リーチ数")
         fig2, ax2 = plt.subplots(figsize=(6, 4))
         ax2.plot(dairy_sum["実行日"], dairy_sum["リーチ"], marker='o', linestyle='-')
         ax2.set_xlabel("日付"); ax2.set_ylabel("リーチ数"); ax2.grid(True)
         plt.xticks(rotation=45); plt.tight_layout()
         st.pyplot(fig2)
 
-    colB1, colB2 = st.columns(2)
-    with colB1:
-        st.subheader("③ 投稿別リーチ推移")
+    elif selected == "③ 投稿別リーチ":
+        st.subheader("📌 投稿別リーチ推移")
         fig3, ax3 = plt.subplots(figsize=(6, 4))
         ax3.plot(daily_reach['実行日'], daily_reach['リーチ'], marker='o')
         ax3.set_xlabel("実行日"); ax3.set_ylabel("リーチ数"); ax3.grid(True)
@@ -171,8 +175,8 @@ def show_dashboard(admin_mode=False):
         plt.xticks(rotation=45); plt.tight_layout()
         st.pyplot(fig3)
 
-    with colB2:
-        st.subheader("④ KPI日次増減")
+    elif selected == "④ KPI日次増減":
+        st.subheader("📉 KPI日次増減")
         st.dataframe(daily_per_post.drop(columns=["投稿ID"]))
     
 
